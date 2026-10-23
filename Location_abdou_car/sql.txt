@@ -1,0 +1,34 @@
+CREATE DATABASE IF NOT EXISTS car_rental CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+USE car_rental;
+
+-- 1. جدول السيارات
+CREATE TABLE IF NOT EXISTS cars (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    image VARCHAR(255) NOT NULL,
+    price INT NOT NULL,
+    category ENUM('normal', 'sport', 'luxury') NOT NULL,
+    city VARCHAR(50) DEFAULT 'مراكش',
+    available TINYINT(1) DEFAULT 1
+);
+
+-- 2. جدول الحجوزات (يتضمن إحداثيات GPS)
+CREATE TABLE IF NOT EXISTS reservations (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    client_name VARCHAR(100) NOT NULL,
+    client_phone VARCHAR(30) NOT NULL,
+    client_city VARCHAR(50) NOT NULL,
+    car_name VARCHAR(100) NOT NULL,
+    car_image VARCHAR(255) NOT NULL,
+    days INT NOT NULL,
+    total_price INT NOT NULL,
+    lat DECIMAL(10, 8) NULL,
+    lng DECIMAL(11, 8) NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+);
+
+-- إدخال بيانات تجريبية للسيارات لكي يشتغل التطبيق مباشرة
+INSERT INTO cars (name, image, price, category, city) VALUES
+('Dacia Logan', 'images/dacia logane.jpg', 200, 'normal', 'مراكش'),
+('Golf 8.5 R-Line', 'images sp/golf 8.5 r line.jpg', 600, 'sport', 'الدار البيضاء'),
+('Range Rover Evoque', 'Images 2/range rover evoque.webp', 900, 'luxury', 'طنجة');

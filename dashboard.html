@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="ar">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard | Abdou Car Admin</title>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css"/>
+    <script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
+
+    <style>
+        body {
+            font-family:'Poppins', sans-serif;
+            background: linear-gradient(135deg,#0f0f0f,#1c1c1c,#111);
+            color:white;
+            direction:rtl;
+        }
+
+        nav {
+            padding: 20px;
+            background: black;
+            display:flex;
+            justify-content:space-between;
+        }
+
+        nav h2 { color:#d4af37; }
+
+        .dashboard { padding:40px; }
+
+        .stats {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
+            gap:20px;
+        }
+
+        .stat {
+            background:#1a1a1a;
+            padding:20px;
+            border-radius:10px;
+            text-align:center;
+        }
+
+        .grid {
+            display:grid;
+            grid-template-columns:repeat(auto-fit,minmax(300px,1fr));
+            gap:20px;
+            margin-top:40px;
+        }
+
+        .card {
+            background:#1a1a1a;
+            border-radius:10px;
+        }
+
+        .card img {
+            width:100%;
+            height:200px;
+            object-fit:cover;
+        }
+
+        .card-content { padding:15px; }
+
+        .total { color:#00ff88; }
+
+        #map {
+            height:400px;
+            margin-top:40px;
+            border-radius:20px;
+        }
+    </style>
+</head>
+<body>
+
+<nav>
+    <h2>ADMIN PANEL</h2>
+    <a href="car.html" style="color:#d4af37;">رجوع</a>
+</nav>
+
+<div class="dashboard">
+
+    <div class="stats">
+        <div class="stat"><h3>عدد الحجوزات</h3><p id="orders">0</p></div>
+        <div class="stat"><h3>إجمالي الأرباح</h3><p id="revenue">0 DH</p></div>
+        <div class="stat"><h3>آخر سيارة</h3><p id="last">---</p></div>
+    </div>
+
+    <div class="grid" id="grid"></div>
+
+    <canvas id="chart"></canvas>
+
+    <h2 style="margin-top:40px; color:#d4af37;">📍 مواقع السيارات</h2>
+    <div id="map"></div>
+
+</div>
+
+<script>
+const grid = document.getElementById("grid");
+const reservations = JSON.parse(localStorage.getItem("carReservations")) || [];
+
+let totalRevenue = 0;
+let revenueByCar = {};
+
+if (reservations.length === 0) {
+    grid.innerHTML = "<p>لا توجد حجوزات</p>";
+}
+
+// CARDS
+reservations.forEach((res, i) => {
+
+    totalRevenue += Number(res.totalPrice);
+    revenueByCar[res.car] = (revenueByCar[res.car] || 0) + Number(res.totalPrice);
+
+    let card = document.createElement("div");
+    card.className = "card";
+
+    card.innerHTML = `
+        <img src="${res.carImg}">
+        <div class="card-content">
+            <h3>${res.car}</h3>
+            <p>${res.clientName}</p>
+            <p>${res.clientPhone}</p>
+            <p>${res.clientCity}</p>
+            <p>${res.days} أيام</p>
+            <p class="total">${res.totalPrice} DH</p>
+            <button onclick="deleteRes(${i})">حذف</button>
+        </div>`;
+
+    grid.appendChild(card);
+});
+
+document.getElementById("orders").innerText = reservations.length;
+document.getElementById("revenue").innerText = totalRevenue + " DH";
+document.getElementById("last").innerText = reservations.length ? reservations[reservations.length-1].car : "---";
+
+function deleteRes(i){
+    reservations.splice(i,1);
+    localStorage.setItem("carReservations", JSON.stringify(reservations));
+    location.reload();
+}
+
+// CHART
+new Chart(document.getElementById("chart"), {
+    type: 'bar',
+    data: {
+        labels: Object.keys(revenueByCar),
+        datasets: [{
+            label: 'الأرباح حسب السيارة',
+            data: Object.values(revenueByCar),
+            backgroundColor: '#d4af37'
+        }]
+    }
+});
+
+// =====================
+// MAP GPS
+// =====================
+
+var map = L.map('map').setView([34.02, -6.84], 6);
+
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(map);
+
+reservations.forEach(res => {
+    if(res.lat && res.lng) {
+        L.marker([res.lat, res.lng])
+        .addTo(map)
+        .bindPopup(`
+            <b>${res.car}</b><br>
+            👤 ${res.clientName}<br>
+            📞 ${res.clientPhone}<br>
+            💰 ${res.totalPrice} DH
+        `);
+    }
+});
+</script>
+
+</body>
+</html>
